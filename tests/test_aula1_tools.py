@@ -5,6 +5,7 @@ inclusive o caminho de ERRO — é ele que permite a autocorreção do agente.
 """
 
 import json
+from datetime import UTC, datetime, timedelta
 
 from opspilot import tools
 
@@ -50,3 +51,36 @@ def test_schema_da_ferramenta_tem_descricao():
     schema = tools.consultar_metricas.args
     assert "servico" in schema
     assert "métricas" in tools.consultar_metricas.description.lower()
+
+
+def test_listar_deploys_filtra_e_ordena_logs(tmp_path, monkeypatch):
+    agora = datetime.now(UTC)
+    horario_recente = agora.replace(microsecond=0)
+    horario_anterior = (horario_recente - timedelta(minutes=20)).isoformat()
+    horario_antigo = (horario_recente - timedelta(hours=8)).isoformat()
+    linha_recente = f"{horario_recente.isoformat()} INFO deploy recente"
+    linha_anterior = f"{horario_anterior} INFO deploy anterior"
+    (tmp_path / "checkout.log").write_text(f"{linha_recente}\n", encoding="utf-8")
+    (tmp_path / "pagamentos.log").write_text(
+        f"{horario_antigo} INFO deploy antigo\n"
+        f"{linha_anterior}\n"
+        f"{horario_recente.isoformat()} INFO sem alteracao\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(tools, "DIR_LOGS", tmp_path)
+
+    saida = tools.listar_deploys.invoke({"horas": 6})
+
+    assert saida.splitlines() == [linha_anterior, linha_recente]
+
+
+def test_listar_deploys_sem_resultados_na_janela(tmp_path, monkeypatch):
+    (tmp_path / "checkout.log").write_text(
+        "2026-10-12T17:55:00Z INFO deploy antigo\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(tools, "DIR_LOGS", tmp_path)
+
+    saida = tools.listar_deploys.invoke({"horas": 6})
+
+    assert saida == "Nenhum deploy encontrado nos logs nas últimas 6 horas."
