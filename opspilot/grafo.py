@@ -292,6 +292,17 @@ def executar_abertura_ticket(estado: EstadoOps) -> dict:
     )
     return {"ticket": resultado}
 
+def notificar_canal(estado: EstadoOps) -> dict:
+    """Simula o envio da notificação para o canal #incidentes."""
+    diagnostico = estado["diagnostico"]
+    mensagem = (
+        f"[#incidentes] Novo incidente - {estado.get('ticket')}\n"
+        f"Serviço: {diagnostico['servico_causa_raiz']} | "
+        f"Severidade: {diagnostico['severidade']}\n"
+        f"Causa: {diagnostico['causa_raiz']}"
+    )
+    print(mensagem)
+    return {}
 
 def responder(estado: EstadoOps) -> dict:
     """Monta a resposta final a partir do diagnóstico VALIDADO (sem nova chamada ao LLM)."""
@@ -393,18 +404,21 @@ def construir_grafo(aprovacao_humana: bool = True, checkpointer=None):
     g.add_node("recusar", recusar)
     g.add_node("responder", responder)
     g.add_node("escalar_humano", escalar_humano)
+    g.add_node("notificar_canal", notificar_canal)
 
     g.add_edge(START, "classificar")
     g.add_conditional_edges("classificar", rota_por_categoria)
     g.add_conditional_edges("investigar", rota_investigacao)
-    g.add_edge("ferramentas", "investigar")  # ← a aresta que cria o CICLO
+    g.add_edge("ferramentas", "investigar")
 
     if aprovacao_humana:
         g.add_node("aprovar_ticket", aprovar_ticket)
         g.add_node("abrir_ticket", executar_abertura_ticket)
         g.add_conditional_edges("validar", rota_validacao)
         g.add_conditional_edges("aprovar_ticket", rota_aprovacao)
-        g.add_edge("abrir_ticket", "responder")
+        g.add_edge("abrir_ticket", "notificar_canal")
+        g.add_edge("notificar_canal", "responder")
+
     else:
         # Sem humano no loop: sucesso vai direto para a resposta.
         def rota_validacao_sem_ticket(estado: EstadoOps) -> Literal["investigar", "escalar_humano", "responder"]:

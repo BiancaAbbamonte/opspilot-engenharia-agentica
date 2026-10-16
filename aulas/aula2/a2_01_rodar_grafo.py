@@ -90,6 +90,15 @@ def main() -> None:
         executar(grafo, Command(resume=decisao), config)
         snapshot = grafo.get_state(config)
 
+    for numero, checkpoint in enumerate(grafo.get_state_history(config), start=1):
+        checkpoint_id = checkpoint.config["configurable"].get("checkpoint_id")
+        print(
+            f"Checkpoint {numero}: "
+            f"id={checkpoint_id} | "
+            f"criado={checkpoint.created_at} | "
+            f"próximos={checkpoint.next}"
+        )
+
     tentativas = snapshot.values.get("tentativas")
     print(f"\n🏁 Fim. Categoria: {snapshot.values.get('categoria')} | tentativas de validação: {tentativas}")
 

@@ -66,7 +66,7 @@ def test_grafo_compila_com_todos_os_nos():
     """Montar o grafo não chama o LLM — dá para validar a estrutura no CI."""
     compilado = g.construir_grafo(aprovacao_humana=True, checkpointer=InMemorySaver())
     nos = set(compilado.get_graph().nodes)
-    esperados = {"classificar", "investigar", "ferramentas", "validar", "aprovar_ticket", "abrir_ticket", "responder"}
+    esperados = {"classificar", "investigar", "ferramentas", "validar", "aprovar_ticket", "abrir_ticket", "responder","notificar_canal"}
     assert esperados <= nos
 
 
