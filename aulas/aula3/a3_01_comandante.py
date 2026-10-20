@@ -61,15 +61,12 @@ def decidir(interrupcao: dict, auto_aprovar: bool) -> dict:
         print(f"\n✋ Aprovação necessária: {acao['name']}")
         for chave, valor in acao["args"].items():
             print(f"   • {chave}: {valor}")
-        # ┌─ LACUNA [A3-L5] Responda ao humano-no-loop do harness
-        # │  Dica: Cada ação pausada precisa de uma decisão: {"type": "approve"} ou {"type": "reject", "message": "motivo"}. No modo --auto-aprovar, aprove direto.
-        # │  Copilot Chat: "Se auto_aprovar ou o usuário digitar s, adicione {"type": "approve"} em decisoes; senão adicione {"type": "reject", "message": "Reprovado pelo plantão"}"
-        # └─ Troque cada ___ abaixo. Gabarito: `make gabarito-aula AULA=3`
+        # [A3-L5] ✔ Responda ao humano-no-loop do harness
         resposta = "s" if auto_aprovar else input("   Aprovar? [s/n]: ").strip().lower()
         if resposta.startswith("s"):
-            decisoes.append({"type": ___})
+            decisoes.append({"type": "approve"})
         else:
-            decisoes.append({"type": ___, "message": "Reprovado pelo plantão"})
+            decisoes.append({"type": "reject", "message": "Reprovado pelo plantão"})
     return {"decisions": decisoes}
 
 

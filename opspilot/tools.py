@@ -63,11 +63,8 @@ def _normalizar(texto: str) -> list[str]:
 # --------------------------------------------------------------------------- #
 
 
-# ┌─ LACUNA [A1-L2] Transforme a função em uma ferramenta que o LLM enxerga
-# │  Dica: O LangChain tem um decorator que lê o nome, a docstring e os tipos da função para gerar o schema da ferramenta. Ele já foi importado no topo do arquivo.
-# │  Copilot Chat: "Transforme a função consultar_metricas em uma ferramenta LangChain usando o decorator importado de langchain_core.tools"
-# └─ Troque cada ___ abaixo. Gabarito: `make gabarito-aula AULA=1`
-@___
+# [A1-L2] ✔ Transforme a função em uma ferramenta que o LLM enxerga
+@tool
 def consultar_metricas(servico: str) -> str:
     """Consulta as métricas atuais de UM serviço e compara com o baseline.
 
@@ -81,12 +78,12 @@ def consultar_metricas(servico: str) -> str:
     metricas = _carregar_metricas()
     nome = servico.strip().lower()
 
-    # ┌─ LACUNA [A1-L3] Erro vira observação (autocorreção do agente)
-    # │  Dica: Não lance exceção! Devolva um TEXTO dizendo que o serviço não existe e liste os válidos — o agente vai ler e tentar de novo com o nome certo.
-    # │  Copilot Chat: "Se o serviço não estiver em metricas, retorne uma string de erro amigável listando os serviços válidos separados por vírgula"
-    # └─ Troque cada ___ abaixo. Gabarito: `make gabarito-aula AULA=1`
+    # [A1-L3] ✔ Erro vira observação (autocorreção do agente)
     if nome not in metricas:
-        return ___
+        return (
+            f"ERRO: serviço '{servico}' não encontrado. "
+            f"Serviços válidos: {', '.join(sorted(metricas))}."
+        )
 
     return json.dumps({"servico": nome, **metricas[nome]}, ensure_ascii=False, indent=2)
 
