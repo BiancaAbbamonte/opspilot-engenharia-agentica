@@ -1,4 +1,4 @@
-"""Aula 3 — O OpsPilot "Comandante de Incidente" com o Deep Agent Harness.
+"""Aula 3 — O OpsPilot como agente orquestrador de incidentes, com o Deep Agent Harness.
 
 O que é um *harness*?
 ---------------------
@@ -21,7 +21,7 @@ apoiado em **4 pilares**:
 E o grafo da Aula 2?
     ``create_deep_agent`` devolve um grafo LangGraph, e aceita outro grafo
     compilado como sub-agente (``CompiledSubAgent``). Por isso a FSM da Aula 2
-    vira um "especialista" que o Comandante consulta para ter um diagnóstico
+    vira um "especialista" que o orquestrador consulta para ter um diagnóstico
     VALIDADO. É assim que se encapsula um fluxo LangGraph num harness.
 
 Mapa de arquivos que o agente enxerga (backend composto)::
@@ -44,7 +44,7 @@ from opspilot.tools import abrir_ticket, buscar_runbook, consultar_metricas, ler
 # Prompts
 # --------------------------------------------------------------------------- #
 
-PROMPT_COMANDANTE = """Você é o OpsPilot Comandante de Incidente da MercadoNimbus.
+PROMPT_ORQUESTRADOR = """Você é o OpsPilot, o agente orquestrador de investigação de incidentes da MercadoNimbus.
 Sua missão é conduzir investigações complexas de ponta a ponta e entregar um
 post-mortem impecável, com cada afirmação apoiada em evidência.
 
@@ -136,7 +136,7 @@ PERMISSOES = [
 
 
 def criar_deep_agent(checkpointer=None):
-    """Cria o Comandante de Incidente.
+    """Cria o agente orquestrador de incidentes.
 
     Args:
         checkpointer: Necessário para o ``interrupt_on`` (aprovação humana do
@@ -149,12 +149,12 @@ def criar_deep_agent(checkpointer=None):
     return create_deep_agent(
         model=obter_llm(),
         tools=[consultar_metricas, abrir_ticket],
-        system_prompt=PROMPT_COMANDANTE,
+        system_prompt=PROMPT_ORQUESTRADOR,
         subagents=[ANALISTA_DE_LOGS, PESQUISADOR_DE_RUNBOOKS, criar_subagente_triagem()],
         backend=criar_backend(),
         memory=["/memoria/AGENTS.md"],
         permissions=PERMISSOES,
         interrupt_on={"abrir_ticket": True},
         checkpointer=checkpointer,
-        name="opspilot-comandante",
+        name="opspilot-orquestrador",
     )
