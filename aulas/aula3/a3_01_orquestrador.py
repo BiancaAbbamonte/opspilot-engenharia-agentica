@@ -9,8 +9,8 @@ O que observar enquanto roda:
 
 Como rodar::
 
-    python -m aulas.aula3.a3_01_comandante
-    python -m aulas.aula3.a3_01_comandante --incidente INC-2041 --auto-aprovar
+    python -m aulas.aula3.a3_01_orquestrador
+    python -m aulas.aula3.a3_01_orquestrador --incidente INC-2041 --auto-aprovar
 
 Custo: este exercício faz várias chamadas ao modelo (é um agente "profundo").
 Com um modelo *mini* fica na casa de centavos de dólar por execução.
@@ -51,7 +51,7 @@ def mostrar_mensagem(m) -> None:
             caminho = args.get("file_path") or args.get("path") or ""
             print(f"🔧 {chamada['name']} {caminho}".rstrip())
     if m.type == "ai" and not getattr(m, "tool_calls", None):
-        print(f"\n✅ RESPOSTA FINAL DO COMANDANTE\n{texto_de(m)}")
+        print(f"\n✅ RESPOSTA FINAL DO ORQUESTRADOR\n{texto_de(m)}")
 
 
 def decidir(interrupcao: dict, auto_aprovar: bool) -> dict:
