@@ -42,10 +42,7 @@ def criar_agente_react(ferramentas: list | None = None, checkpointer=None):
     Returns:
         Um grafo compilado (``CompiledStateGraph``) com ``.invoke()`` e ``.stream()``.
     """
-    # ┌─ LACUNA [A1-L5] Monte o agente: modelo + ferramentas + prompt
-    # │  Dica: create_agent recebe o modelo, a lista de ferramentas e o system_prompt (argumento nomeado). Use obter_llm(), a variável `ferramentas` e montar_prompt_sistema().
-    # │  Copilot Chat: "Crie o agente com create_agent passando model=obter_llm(), tools=ferramentas or TODAS_FERRAMENTAS, system_prompt=montar_prompt_sistema() e checkpointer=checkpointer"
-    # └─ Troque cada ___ abaixo. Gabarito: `make gabarito-aula AULA=1`
+    # [A1-L5] ✔ Monte o agente: modelo + ferramentas + prompt
     agente = create_agent(
         model=obter_llm(),
         tools=ferramentas or TODAS_FERRAMENTAS,

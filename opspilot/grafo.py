@@ -360,10 +360,7 @@ def rota_investigacao(estado: EstadoOps) -> Literal["ferramentas", "validar"]:
 def rota_validacao(estado: EstadoOps) -> Literal["investigar", "escalar_humano", "aprovar_ticket", "responder"]:
     """Rota de ERRO com retry limitado + rota feliz com ou sem ticket."""
     problemas = estado.get("erros_validacao") or []
-    # ┌─ LACUNA [A2-L4] Rota de erro resiliente
-    # │  Dica: Se há problemas: volte para "investigar" enquanto tentativas < MAX_TENTATIVAS; senão "escalar_humano". Sem problemas: SEV1/SEV2 vão para "aprovar_ticket", SEV3 vai direto para "responder".
-    # │  Copilot Chat: "Implemente a rota: com problemas e tentativas < MAX_TENTATIVAS -> "investigar"; com problemas e tentativas esgotadas -> "escalar_humano"; sem problemas e severidade SEV1/SEV2 -> "aprovar_ticket"; senão "responder""
-    # └─ Troque cada ___ abaixo. Gabarito: `make gabarito-aula AULA=2`
+    # [A2-L4] ✔ Rota de erro resiliente
     if problemas:
         return "investigar" if estado.get("tentativas", 0) < MAX_TENTATIVAS else "escalar_humano"
     severidade = (estado.get("diagnostico") or {}).get("severidade")

@@ -81,10 +81,7 @@ def consultar_metricas(servico: str) -> str:
     metricas = _carregar_metricas()
     nome = servico.strip().lower()
 
-    # ┌─ LACUNA [A1-L3] Erro vira observação (autocorreção do agente)
-    # │  Dica: Não lance exceção! Devolva um TEXTO dizendo que o serviço não existe e liste os válidos — o agente vai ler e tentar de novo com o nome certo.
-    # │  Copilot Chat: "Se o serviço não estiver em metricas, retorne uma string de erro amigável listando os serviços válidos separados por vírgula"
-    # └─ Troque cada ___ abaixo. Gabarito: `make gabarito-aula AULA=1`
+    # [A1-L3] ✔ Erro vira observação (autocorreção do agente)
     if nome not in metricas:
         return f"ERRO: serviço '{nome}' não encontrado. Serviços válidos: {', '.join(sorted(metricas))}."
 
