@@ -1,0 +1,8 @@
+1. Ler o incidente em /base/incidentes/INC-2041.md e identificar serviços, sintomas e janela temporal.
+2. Consultar métricas dos serviços possivelmente envolvidos para obter evidências numéricas.
+3. Delegar análise de logs por serviço relevante ao analista-de-logs.
+4. Delegar busca do runbook oficial ao pesquisador-de-runbooks.
+5. Delegar validação diagnóstica ao triagem-fsm.
+6. Consolidar evidências em /notas/*.md com fonte e números.
+7. Escrever o post-mortem em /relatorios/postmortem-INC-2041.md no formato padrão.
+8. Revisar e autocorrigir o relatório conferindo cada número com /notas/; atualizar memória se houver aprendizado reutilizável.

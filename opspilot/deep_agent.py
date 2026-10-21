@@ -53,13 +53,15 @@ post-mortem impecável, com cada afirmação apoiada em evidência.
 2. Leia o incidente em `/base/incidentes/<ID>.md` e o formato na sua memória.
 3. DELEGUE em paralelo sempre que possível (várias chamadas `task` na mesma rodada):
    - `analista-de-logs`: UM serviço por delegação (ex.: checkout-api, pagamentos-db...).
+   - `redator-executivo`: transforma o post-mortem em e-mail de 120 palavras para diretoria.
    - `pesquisador-de-runbooks`: procedimento oficial do problema encontrado.
    - `triagem-fsm`: segunda opinião com diagnóstico VALIDADO por regras.
 4. Salve o que cada sub-agente devolveu em `/notas/<assunto>.md` (não confie na memória de curto prazo).
 5. Escreva o relatório em `/relatorios/postmortem-<ID>.md` no formato padrão da memória.
 6. AUTOCORREÇÃO: releia o relatório, confira cada número contra `/notas/` e corrija com `edit_file`.
 7. Se aprendeu algo reutilizável, acrescente UMA linha em "Lições aprendidas" de `/memoria/AGENTS.md`.
-8. Por fim, abra o ticket com `abrir_ticket` (um humano vai aprovar).
+8. Escreva um e-mail de 120 palavras para diretoria e salve em `/relatorios/email-diretoria.md`.
+9. Por fim, abra o ticket com `abrir_ticket` (um humano vai aprovar).
 
 ## Regras
 - Nunca invente números ou horários. Separe causa raiz de sintomas.
@@ -97,6 +99,18 @@ PESQUISADOR_DE_RUNBOOKS: SubAgent = {
         "prevenção citando o nome do arquivo do runbook. Não invente procedimentos."
     ),
     "tools": [buscar_runbook],
+}
+
+REDATOR_EXECUTIVO: SubAgent = {
+    "name": "redator-executivo",
+    "description": (
+        "Transforma o post-mortem em um e-mail de 120 palavras para diretoria e salva em /relatorios/email-diretoria.md."
+    ),
+    "system_prompt": (
+        "Você é um redator executivo. Transforme o post-mortem que está em /relatorios/postmortem-<ID>.md em um e-mail de 120 palavras para diretoria."
+        "Redija um e-mail de 120 palavras para diretoria e salve em /relatorios/email-diretoria.md."
+    ),
+    "tools": [],
 }
 
 
@@ -150,7 +164,7 @@ def criar_deep_agent(checkpointer=None):
         model=obter_llm(),
         tools=[consultar_metricas, abrir_ticket],
         system_prompt=PROMPT_ORQUESTRADOR,
-        subagents=[ANALISTA_DE_LOGS, PESQUISADOR_DE_RUNBOOKS, criar_subagente_triagem()],
+        subagents=[ANALISTA_DE_LOGS, PESQUISADOR_DE_RUNBOOKS, REDATOR_EXECUTIVO, criar_subagente_triagem()],
         backend=criar_backend(),
         memory=["/memoria/AGENTS.md"],
         permissions=PERMISSOES,

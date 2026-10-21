@@ -70,8 +70,5 @@ def perguntar(agente, pergunta: str, thread_id: str | None = None) -> str:
 
     resultado = agente.invoke({"messages": [{"role": "user", "content": pergunta}]}, config=config)
 
-    # ┌─ LACUNA [A1-L6] Parse: extraia a resposta final do estado
-    # │  Dica: O estado retornado é um dicionário. A chave "messages" tem o histórico inteiro (usuário, chamadas de ferramenta, observações...). A resposta final é a ÚLTIMA mensagem; use texto_de() para extrair o texto com segurança.
-    # │  Copilot Chat: "Retorne o texto da última mensagem de resultado["messages"] usando a função texto_de"
-    # └─ Troque cada ___ abaixo. Gabarito: `make gabarito-aula AULA=1`
+    # [A1-L6] ✔ Parse: extraia a resposta final do estado
     return texto_de(resultado["messages"][-1])

@@ -92,10 +92,7 @@ class EstadoOps(TypedDict):
     de um Deep Agent na Aula 3 (que só envia ``{"messages": [...]}``).
     """
 
-    # ┌─ LACUNA [A2-L1] O reducer que ACUMULA mensagens no estado
-    # │  Dica: Sem reducer, cada nó que retorna "messages" SOBRESCREVE o histórico. Use Annotated[list[AnyMessage], <reducer>] — o reducer padrão do LangGraph para mensagens já está importado.
-    # │  Copilot Chat: "Declare o campo messages como Annotated de list[AnyMessage] usando o reducer add_messages do LangGraph"
-    # └─ Troque cada ___ abaixo. Gabarito: `make gabarito-aula AULA=2`
+    # [A2-L1] ✔ O reducer que ACUMULA mensagens no estado
     messages: Annotated[list[AnyMessage], add_messages]
     categoria: NotRequired[str]
     servico: NotRequired[str | None]
@@ -218,7 +215,8 @@ def investigar(estado: EstadoOps) -> dict:
     """Um passo do ciclo ReAct, agora como NÓ explícito do grafo."""
     modelo = _llm().bind_tools(FERRAMENTAS_LEITURA)
     instrucao = SystemMessage(
-        montar_prompt_sistema() + "\n\nNesta etapa você SÓ investiga (não abra tickets). Quando tiver evidências "
+        montar_prompt_sistema()
+        + "\n\nNesta etapa você SÓ investiga (não abra tickets). Quando tiver evidências "
         "suficientes, escreva o diagnóstico no formato pedido, sem chamar ferramentas."
     )
     resposta = modelo.invoke([instrucao, *estado["messages"]])
@@ -266,10 +264,7 @@ def aprovar_ticket(estado: EstadoOps) -> dict:
     A execução continua quando alguém chama o grafo com ``Command(resume=...)``.
     """
     diag = estado["diagnostico"] or {}
-    # ┌─ LACUNA [A2-L5] Pause o grafo pedindo aprovação humana
-    # │  Dica: interrupt(valor) pausa o grafo e mostra `valor` para quem chamou. Quando o grafo for retomado com Command(resume="sim"), interrupt(...) RETORNA "sim".
-    # │  Copilot Chat: "Chame interrupt passando um dicionário com a pergunta "Abrir ticket?" e o rascunho do ticket (servico, severidade, causa_raiz) e guarde o retorno em decisao"
-    # └─ Troque cada ___ abaixo. Gabarito: `make gabarito-aula AULA=2`
+    # [A2-L5] ✔ Pause o grafo pedindo aprovação humana
     decisao = interrupt(
         {
             "pergunta": "Abrir ticket com este diagnóstico? (sim/nao)",
@@ -292,17 +287,6 @@ def executar_abertura_ticket(estado: EstadoOps) -> dict:
     )
     return {"ticket": resultado}
 
-def notificar_canal(estado: EstadoOps) -> dict:
-    """Simula o envio da notificação para o canal #incidentes."""
-    diagnostico = estado["diagnostico"]
-    mensagem = (
-        f"[#incidentes] Novo incidente - {estado.get('ticket')}\n"
-        f"Serviço: {diagnostico['servico_causa_raiz']} | "
-        f"Severidade: {diagnostico['severidade']}\n"
-        f"Causa: {diagnostico['causa_raiz']}"
-    )
-    print(mensagem)
-    return {}
 
 def responder(estado: EstadoOps) -> dict:
     """Monta a resposta final a partir do diagnóstico VALIDADO (sem nova chamada ao LLM)."""
@@ -339,10 +323,7 @@ def escalar_humano(estado: EstadoOps) -> dict:
 
 def rota_por_categoria(estado: EstadoOps) -> Literal["investigar", "responder_duvida", "recusar"]:
     """Primeira bifurcação do grafo."""
-    # ┌─ LACUNA [A2-L2] Roteie pela categoria
-    # │  Dica: Mapeie cada categoria para o nome do NÓ seguinte: incidente→investigar, duvida→responder_duvida; qualquer outra coisa→recusar (o default é a rota segura).
-    # │  Copilot Chat: "Retorne o nome do próximo nó com base em estado.get("categoria"): incidente -> "investigar", duvida -> "responder_duvida", caso contrário "recusar""
-    # └─ Troque cada ___ abaixo. Gabarito: `make gabarito-aula AULA=2`
+    # [A2-L2] ✔ Roteie pela categoria
     destinos = {"incidente": "investigar", "duvida": "responder_duvida"}
     return destinos.get(estado.get("categoria"), "recusar")
 
@@ -350,10 +331,7 @@ def rota_por_categoria(estado: EstadoOps) -> Literal["investigar", "responder_du
 def rota_investigacao(estado: EstadoOps) -> Literal["ferramentas", "validar"]:
     """O CICLO: se o modelo pediu ferramenta, executa; senão, vai validar."""
     ultima = estado["messages"][-1]
-    # ┌─ LACUNA [A2-L3] Feche o ciclo ReAct no grafo
-    # │  Dica: Uma AIMessage que pede ferramenta tem a lista `tool_calls` não vazia. Use getattr(ultima, "tool_calls", None) para não quebrar com outros tipos de mensagem.
-    # │  Copilot Chat: "Retorne "ferramentas" se a última mensagem tiver tool_calls não vazio, senão "validar""
-    # └─ Troque cada ___ abaixo. Gabarito: `make gabarito-aula AULA=2`
+    # [A2-L3] ✔ Feche o ciclo ReAct no grafo
     return "ferramentas" if getattr(ultima, "tool_calls", None) else "validar"
 
 
@@ -401,21 +379,18 @@ def construir_grafo(aprovacao_humana: bool = True, checkpointer=None):
     g.add_node("recusar", recusar)
     g.add_node("responder", responder)
     g.add_node("escalar_humano", escalar_humano)
-    g.add_node("notificar_canal", notificar_canal)
 
     g.add_edge(START, "classificar")
     g.add_conditional_edges("classificar", rota_por_categoria)
     g.add_conditional_edges("investigar", rota_investigacao)
-    g.add_edge("ferramentas", "investigar")
+    g.add_edge("ferramentas", "investigar")  # ← a aresta que cria o CICLO
 
     if aprovacao_humana:
         g.add_node("aprovar_ticket", aprovar_ticket)
         g.add_node("abrir_ticket", executar_abertura_ticket)
         g.add_conditional_edges("validar", rota_validacao)
         g.add_conditional_edges("aprovar_ticket", rota_aprovacao)
-        g.add_edge("abrir_ticket", "notificar_canal")
-        g.add_edge("notificar_canal", "responder")
-
+        g.add_edge("abrir_ticket", "responder")
     else:
         # Sem humano no loop: sucesso vai direto para a resposta.
         def rota_validacao_sem_ticket(estado: EstadoOps) -> Literal["investigar", "escalar_humano", "responder"]:
@@ -427,8 +402,5 @@ def construir_grafo(aprovacao_humana: bool = True, checkpointer=None):
     for final in ("responder", "responder_duvida", "recusar", "escalar_humano"):
         g.add_edge(final, END)
 
-    # ┌─ LACUNA [A2-L6] Compile com persistência
-    # │  Dica: compile() aceita checkpointer=... É ele que permite pausar no interrupt e retomar depois (até em outro processo, com SqliteSaver).
-    # │  Copilot Chat: "Compile o grafo g passando o checkpointer recebido e o nome "opspilot-fsm""
-    # └─ Troque cada ___ abaixo. Gabarito: `make gabarito-aula AULA=2`
+    # [A2-L6] ✔ Compile com persistência
     return g.compile(checkpointer=checkpointer, name="opspilot-fsm")

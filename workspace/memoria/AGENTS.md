@@ -25,3 +25,5 @@
 
 ## Lições aprendidas (o agente acrescenta abaixo, 1 linha por lição)
 - Fila de notificações crescendo costuma ser efeito colateral de retries da API produtora.
+- Reduções bruscas de pool de conexões em banco/config podem se manifestar primeiro como latência e 503 na API dependente, antes de qualquer erro explícito no banco.
+- Alerta de certificado TLS pode coexistir com incidentes de performance, mas não deve ser tratado como causa de latência sem evidência adicional.
