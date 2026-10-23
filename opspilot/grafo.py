@@ -19,7 +19,10 @@ O grafo (gere o desenho com ``python -m aulas.aula2.a2_02_desenhar_grafo``)::
                          │                 validar ──erro & tentativas<3──▶ investigar
                          │                    │  └──erro & esgotou──▶ escalar_humano → END
                          │                    ▼ ok
-                         │            aprovar_ticket (interrupt) ─sim─▶ abrir_ticket ─┐
+                         │            aprovar_ticket (interrupt) ─sim─▶ abrir_ticket
+                         │                                                   │
+                         │                                            notificar_canal
+                         │                                                   │
                          │                    └─────────────nao─────────────────────┤
                          │                                                          ▼
                          ├─ duvida ─────▶ responder_duvida → END              responder → END
@@ -288,6 +291,19 @@ def executar_abertura_ticket(estado: EstadoOps) -> dict:
     return {"ticket": resultado}
 
 
+def notificar_canal(estado: EstadoOps) -> dict:
+    """Simula o envio de uma notificação de incidente para o canal operacional."""
+    diagnostico = estado["diagnostico"]
+    mensagem = (
+        f"[#incidentes] Novo incidente - {estado.get('ticket')}\n"
+        f"Serviço: {diagnostico['servico_causa_raiz']} | "
+        f"Severidade: {diagnostico['severidade']}\n"
+        f"Causa: {diagnostico['causa_raiz']}"
+    )
+    print(mensagem)
+    return {}
+
+
 def responder(estado: EstadoOps) -> dict:
     """Monta a resposta final a partir do diagnóstico VALIDADO (sem nova chamada ao LLM)."""
     d = estado["diagnostico"]
@@ -379,6 +395,7 @@ def construir_grafo(aprovacao_humana: bool = True, checkpointer=None):
     g.add_node("recusar", recusar)
     g.add_node("responder", responder)
     g.add_node("escalar_humano", escalar_humano)
+    g.add_node("notificar_canal", notificar_canal)
 
     g.add_edge(START, "classificar")
     g.add_conditional_edges("classificar", rota_por_categoria)
@@ -390,7 +407,8 @@ def construir_grafo(aprovacao_humana: bool = True, checkpointer=None):
         g.add_node("abrir_ticket", executar_abertura_ticket)
         g.add_conditional_edges("validar", rota_validacao)
         g.add_conditional_edges("aprovar_ticket", rota_aprovacao)
-        g.add_edge("abrir_ticket", "responder")
+        g.add_edge("abrir_ticket", "notificar_canal")
+        g.add_edge("notificar_canal", "responder")
     else:
         # Sem humano no loop: sucesso vai direto para a resposta.
         def rota_validacao_sem_ticket(estado: EstadoOps) -> Literal["investigar", "escalar_humano", "responder"]:

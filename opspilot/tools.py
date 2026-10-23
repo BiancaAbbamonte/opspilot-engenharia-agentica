@@ -30,7 +30,7 @@ from __future__ import annotations
 
 import json
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Literal
 
 from langchain_core.tools import tool
@@ -86,6 +86,38 @@ def consultar_metricas(servico: str) -> str:
         )
 
     return json.dumps({"servico": nome, **metricas[nome]}, ensure_ascii=False, indent=2)
+
+
+@tool
+def listar_deploys(horas: int) -> str:
+    """Busca nos logs os deploys registrados dentro da janela de horas informada.
+
+    Args:
+        horas: Quantidade de horas recentes a consultar; deve ser maior que zero.
+    """
+    if horas <= 0:
+        return "ERRO: informe um número de horas maior que zero."
+
+    limite = datetime.now(UTC).timestamp() - horas * 3600
+    resultados: list[tuple[datetime, str]] = []
+    for arquivo in DIR_LOGS.glob("*.log"):
+        for linha in arquivo.read_text(encoding="utf-8").splitlines():
+            if "deploy" not in linha.lower():
+                continue
+
+            try:
+                horario = datetime.fromisoformat(linha.split(maxsplit=1)[0])
+            except ValueError:
+                continue
+            if horario.tzinfo is None:
+                horario = horario.replace(tzinfo=UTC)
+            if horario.timestamp() >= limite:
+                resultados.append((horario, linha))
+
+    resultados.sort(key=lambda resultado: resultado[0].timestamp())
+    if not resultados:
+        return f"Nenhum deploy encontrado nos logs nas últimas {horas} horas."
+    return "\n".join(linha for _, linha in resultados)
 
 
 @tool
@@ -168,7 +200,7 @@ def abrir_ticket(
         resumo: Causa raiz, evidências e ação recomendada, em poucas linhas.
     """
     DIR_TICKETS.mkdir(parents=True, exist_ok=True)
-    agora = datetime.now(timezone.utc)
+    agora = datetime.now(UTC)
     ticket_id = f"OPS-{agora.strftime('%Y%m%d%H%M%S')}"
     ticket = {
         "id": ticket_id,
@@ -190,7 +222,7 @@ def abrir_ticket(
 # --------------------------------------------------------------------------- #
 
 #: Só leitura: seguras para o agente usar livremente (e para sub-agentes).
-FERRAMENTAS_LEITURA = [consultar_metricas, ler_logs, buscar_runbook]
+FERRAMENTAS_LEITURA = [consultar_metricas, listar_deploys, ler_logs, buscar_runbook]
 
 #: Todas, incluindo a de escrita. Na Aula 2/3 ``abrir_ticket`` passa por aprovação humana.
 TODAS_FERRAMENTAS = [*FERRAMENTAS_LEITURA, abrir_ticket]
